@@ -1,20 +1,25 @@
+import re
 import graphene
 from graphene_django import DjangoObjectType
-from .models import Customer, Product, Order
-import re
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from .models import Customer, Product, Order
 
-# GraphQL types
+# ==========================
+# GraphQL Types
+# ==========================
+
 class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         fields = ("id", "name", "email", "phone", "orders")
 
+
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = ("id", "name", "price", "stock")
+
 
 class OrderType(DjangoObjectType):
     class Meta:
@@ -22,7 +27,20 @@ class OrderType(DjangoObjectType):
         fields = ("id", "customer", "products", "total_amount", "order_date")
 
 
-# --- Customer Mutations ---
+# ==========================
+# Input Types
+# ==========================
+
+class CustomerInput(graphene.InputObjectType):
+    name = graphene.String(required=True)
+    email = graphene.String(required=True)
+    phone = graphene.String()
+
+
+# ==========================
+# Mutations
+# ==========================
+
 class CreateCustomer(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -37,7 +55,7 @@ class CreateCustomer(graphene.Mutation):
         if Customer.objects.filter(email=email).exists():
             raise Exception("Email already exists")
 
-        # Validate phone format if provided
+        # Validate phone format
         if phone and not re.match(r"^\+?\d{7,15}$|^\d{3}-\d{3}-\d{4}$", phone):
             raise Exception("Invalid phone format. Use +1234567890 or 123-456-7890")
 
@@ -47,16 +65,7 @@ class CreateCustomer(graphene.Mutation):
 
 class BulkCreateCustomers(graphene.Mutation):
     class Arguments:
-        customers = graphene.List(
-            graphene.NonNull(
-                graphene.InputObjectType(
-                    "CustomerInput",
-                    name=graphene.String(required=True),
-                    email=graphene.String(required=True),
-                    phone=graphene.String()
-                )
-            )
-        )
+        customers = graphene.List(CustomerInput, required=True)
 
     customers = graphene.List(CustomerType)
     errors = graphene.List(graphene.String)
@@ -73,7 +82,11 @@ class BulkCreateCustomers(graphene.Mutation):
                 if c.phone and not re.match(r"^\+?\d{7,15}$|^\d{3}-\d{3}-\d{4}$", c.phone):
                     raise ValidationError(f"Invalid phone: {c.phone}")
 
-                customer = Customer.objects.create(name=c.name, email=c.email, phone=c.phone)
+                customer = Customer.objects.create(
+                    name=c.name,
+                    email=c.email,
+                    phone=c.phone
+                )
                 created.append(customer)
             except Exception as e:
                 errors.append(str(e))
@@ -81,7 +94,6 @@ class BulkCreateCustomers(graphene.Mutation):
         return BulkCreateCustomers(customers=created, errors=errors)
 
 
-# --- Product Mutation ---
 class CreateProduct(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -100,7 +112,6 @@ class CreateProduct(graphene.Mutation):
         return CreateProduct(product=product)
 
 
-# --- Order Mutation ---
 class CreateOrder(graphene.Mutation):
     class Arguments:
         customer_id = graphene.ID(required=True)
@@ -130,6 +141,10 @@ class CreateOrder(graphene.Mutation):
         return CreateOrder(order=order)
 
 
+# ==========================
+# Queries
+# ==========================
+
 class Query(graphene.ObjectType):
     all_customers = graphene.List(CustomerType)
     all_products = graphene.List(ProductType)
@@ -144,6 +159,10 @@ class Query(graphene.ObjectType):
     def resolve_all_orders(root, info):
         return Order.objects.all()
 
+
+# ==========================
+# Root Mutation
+# ==========================
 
 class Mutation(graphene.ObjectType):
     create_customer = CreateCustomer.Field()
