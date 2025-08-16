@@ -3,34 +3,39 @@ import graphene
 from graphene_django import DjangoObjectType
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from graphene_django.filter import DjangoFilterConnectionField
+
 from .models import Customer, Product, Order
+from crm.filters import CustomerFilter, ProductFilter, OrderFilter
+
 
 # ==========================
 # GraphQL Types
 # ==========================
-
 class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
-        fields = ("id", "name", "email", "phone", "orders")
+        interfaces = (graphene.relay.Node,)
+        filterset_class = CustomerFilter   # ✅ connect custom filter
 
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
-        fields = ("id", "name", "price", "stock")
+        interfaces = (graphene.relay.Node,)
+        filterset_class = ProductFilter    # ✅ connect custom filter
 
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
-        fields = ("id", "customer", "products", "total_amount", "order_date")
+        interfaces = (graphene.relay.Node,)
+        filterset_class = OrderFilter      # ✅ connect custom filter
 
 
 # ==========================
 # Input Types
 # ==========================
-
 class CustomerInput(graphene.InputObjectType):
     name = graphene.String(required=True)
     email = graphene.String(required=True)
@@ -40,7 +45,6 @@ class CustomerInput(graphene.InputObjectType):
 # ==========================
 # Mutations
 # ==========================
-
 class CreateCustomer(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -51,11 +55,9 @@ class CreateCustomer(graphene.Mutation):
     message = graphene.String()
 
     def mutate(self, info, name, email, phone=None):
-        # Validate email uniqueness
         if Customer.objects.filter(email=email).exists():
             raise Exception("Email already exists")
 
-        # Validate phone format
         if phone and not re.match(r"^\+?\d{7,15}$|^\d{3}-\d{3}-\d{4}$", phone):
             raise Exception("Invalid phone format. Use +1234567890 or 123-456-7890")
 
@@ -144,28 +146,25 @@ class CreateOrder(graphene.Mutation):
 # ==========================
 # Queries
 # ==========================
-
 class Query(graphene.ObjectType):
-    all_customers = graphene.List(CustomerType)
-    all_products = graphene.List(ProductType)
-    all_orders = graphene.List(OrderType)
+    customer = graphene.relay.Node.Field(CustomerType)
+    product = graphene.relay.Node.Field(ProductType)
+    order = graphene.relay.Node.Field(OrderType)
 
-    def resolve_all_customers(root, info):
-        return Customer.objects.all()
+    all_customers = DjangoFilterConnectionField(CustomerType)
+    all_products = DjangoFilterConnectionField(ProductType)
+    all_orders = DjangoFilterConnectionField(OrderType)
 
-    def resolve_all_products(root, info):
-        return Product.objects.all()
 
-    def resolve_all_orders(root, info):
-        return Order.objects.all()
 
 
 # ==========================
 # Root Mutation
 # ==========================
-
 class Mutation(graphene.ObjectType):
     create_customer = CreateCustomer.Field()
     bulk_create_customers = BulkCreateCustomers.Field()
     create_product = CreateProduct.Field()
     create_order = CreateOrder.Field()
+
+schema = graphene.Schema(query=Query)
