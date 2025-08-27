@@ -5,7 +5,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from graphene_django.filter import DjangoFilterConnectionField
 
-from .models import Customer, Product, Order
+from crm.models import Customer, Product, Order
 from crm.filters import CustomerFilter, ProductFilter, OrderFilter
 
 
