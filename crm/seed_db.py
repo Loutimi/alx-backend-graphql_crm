@@ -9,6 +9,7 @@ django.setup()
 
 from crm.models import Customer, Product, Order
 
+
 def seed_customers():
     customers_data = [
         {"name": "Alice", "email": "alice@example.com", "phone": "+1234567890"},
@@ -23,6 +24,7 @@ def seed_customers():
             print(f"Created customer: {customer.name}")
         else:
             print(f"Customer already exists: {customer.name}")
+
 
 def seed_products():
     products_data = [
@@ -39,6 +41,7 @@ def seed_products():
         else:
             print(f"Product already exists: {product.name}")
 
+
 def seed_orders():
     customers = list(Customer.objects.all())
     products = list(Product.objects.all())
@@ -53,12 +56,11 @@ def seed_orders():
 
         total_amount = sum([p.price for p in selected_products])
         order = Order.objects.create(
-            customer=customer,
-            total_amount=total_amount,
-            order_date=datetime.now()
+            customer=customer, total_amount=total_amount, order_date=datetime.now()
         )
         order.products.set(selected_products)
         print(f"Created order {order.id} for {customer.name} (${total_amount:.2f})")
+
 
 if __name__ == "__main__":
     print("Seeding database...")

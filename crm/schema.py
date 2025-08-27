@@ -18,21 +18,21 @@ class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         interfaces = (graphene.relay.Node,)
-        filterset_class = CustomerFilter   # connect custom filter
+        filterset_class = CustomerFilter  # connect custom filter
 
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         interfaces = (graphene.relay.Node,)
-        filterset_class = ProductFilter    # connect custom filter
+        filterset_class = ProductFilter  # connect custom filter
 
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         interfaces = (graphene.relay.Node,)
-        filterset_class = OrderFilter      # connect custom filter
+        filterset_class = OrderFilter  # connect custom filter
 
 
 # ==========================
@@ -64,7 +64,9 @@ class CreateCustomer(graphene.Mutation):
             raise Exception("Invalid phone format. Use +1234567890 or 123-456-7890")
 
         customer = Customer.objects.create(name=name, email=email, phone=phone)
-        return CreateCustomer(customer=customer, message="Customer created successfully!")
+        return CreateCustomer(
+            customer=customer, message="Customer created successfully!"
+        )
 
 
 class BulkCreateCustomers(graphene.Mutation):
@@ -83,13 +85,13 @@ class BulkCreateCustomers(graphene.Mutation):
             try:
                 if Customer.objects.filter(email=c.email).exists():
                     raise ValidationError(f"Email already exists: {c.email}")
-                if c.phone and not re.match(r"^\+?\d{7,15}$|^\d{3}-\d{3}-\d{4}$", c.phone):
+                if c.phone and not re.match(
+                    r"^\+?\d{7,15}$|^\d{3}-\d{3}-\d{4}$", c.phone
+                ):
                     raise ValidationError(f"Invalid phone: {c.phone}")
 
                 customer = Customer.objects.create(
-                    name=c.name,
-                    email=c.email,
-                    phone=c.phone
+                    name=c.name, email=c.email, phone=c.phone
                 )
                 created.append(customer)
             except Exception as e:
@@ -159,7 +161,11 @@ class UpdateLowStockProducts(graphene.Mutation):
             product.save()
             updated_products.append(product)
 
-        message = "Low stock products updated successfully." if updated_products else "No low stock products found."
+        message = (
+            "Low stock products updated successfully."
+            if updated_products
+            else "No low stock products found."
+        )
 
         return UpdateLowStockProducts(products=updated_products, message=message)
 
@@ -177,8 +183,6 @@ class Query(graphene.ObjectType):
     all_orders = DjangoFilterConnectionField(OrderType)
 
 
-
-
 # ==========================
 # Root Mutation
 # ==========================
@@ -188,5 +192,6 @@ class Mutation(graphene.ObjectType):
     create_product = CreateProduct.Field()
     create_order = CreateOrder.Field()
     update_low_stock_products = UpdateLowStockProducts.Field()
+
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
