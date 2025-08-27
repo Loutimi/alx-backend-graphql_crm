@@ -3,3 +3,4 @@ venv
 db.sqlite3
 venv_wsl
 .vscode/
+venv_name.txt
