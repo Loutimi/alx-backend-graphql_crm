@@ -5,7 +5,9 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from graphene_django.filter import DjangoFilterConnectionField
 
-from crm.models import Customer, Product, Order
+from crm.models import Customer
+from crm.models import Product
+from crm.models import Order
 from crm.filters import CustomerFilter, ProductFilter, OrderFilter
 
 
@@ -16,21 +18,21 @@ class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         interfaces = (graphene.relay.Node,)
-        filterset_class = CustomerFilter   # ✅ connect custom filter
+        filterset_class = CustomerFilter   # connect custom filter
 
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         interfaces = (graphene.relay.Node,)
-        filterset_class = ProductFilter    # ✅ connect custom filter
+        filterset_class = ProductFilter    # connect custom filter
 
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         interfaces = (graphene.relay.Node,)
-        filterset_class = OrderFilter      # ✅ connect custom filter
+        filterset_class = OrderFilter      # connect custom filter
 
 
 # ==========================
