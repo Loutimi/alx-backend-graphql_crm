@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "graphene_django",
     "django_filters",
     "crm",
+    "django_crontab",
 ]
 
 MIDDLEWARE = [
@@ -52,7 +53,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "alx_backend_graphql_crm.urls"
+ROOT_URLCONF = "crm.urls"
 
 TEMPLATES = [
     {
@@ -69,7 +70,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "alx_backend_graphql_crm.wsgi.application"
+WSGI_APPLICATION = "crm.wsgi.application"
 
 
 # Database
